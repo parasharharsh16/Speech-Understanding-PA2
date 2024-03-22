@@ -1,0 +1,6 @@
+torch torchvision torchaudio
+ipykernel
+wandb
+gradio
+typing
+pathlib

@@ -1,0 +1,5 @@
+su_pa2/
+dataset/voxceleb1_dataset/
+models/hubert_large_finetune.pth
+models/wav2vec2_xlsr_finetune.pth
+models/wavlm_large_finetune.pth
