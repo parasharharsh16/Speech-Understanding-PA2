@@ -7,3 +7,4 @@ Libirimix/.
 fairseq/
 s3prl/
 __pycache__/
+dataset/testkn_audio/
