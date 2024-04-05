@@ -1,5 +1,9 @@
 su_pa2/
-dataset/
+dataset/archive
 models/hubert_large_finetune.pth
 models/wav2vec2_xlsr_finetune.pth
 models/wavlm_large_finetune.pth
+Libirimix/.
+fairseq/
+s3prl/
+__pycache__/
