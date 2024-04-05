@@ -10,6 +10,10 @@ import torch.nn.functional as F
 from torchaudio.transforms import Resample
 from ecapa_tdnn import ECAPA_TDNN_SMALL
 import multiprocessing as mp
+from pydub import AudioSegment
+import os
+import random
+
 # Define config for models to loop on each of them
 config = {
             "models": ["wav2vec2_xlsr_finetune.pth","hubert_large_finetune.pth","wavlm_large_finetune.pth"],
@@ -69,19 +73,14 @@ def compare_models_on_voxceleb1h(models, dataset_path, percentage=0.0001):
     output = []
     for model in models:
         model_path = f"{config['model_folder']}/{model}"
-        print(f"Processing model {model_path}")
-        # Load the model
-        model = load_models(model_path, model)
+
+        model = load_models(model_path)
         model.to(device)
-        # Set the model to evaluation mode
         model.eval()
         # Loop through the dataset
         for data in loaded_data:
             sample1, sample2, label = data["audio_1"], data["audio_2"], data["label"]
-            score1 = model(sample1.to(device))
-            score2 = model(sample2.to(device))
-            score = F.cosine_similarity(score1, score2).item()
-
+            score = get_similarity_score(model,sample1.to(device), sample2.to(device))
             if label == 1:
                 genuine_scores.append(score)
             else:
@@ -91,27 +90,87 @@ def compare_models_on_voxceleb1h(models, dataset_path, percentage=0.0001):
         output.append({"model": model_path, "eer": eer, "eer_threshold": eer_threshold})
     return output
 
-def load_models(model_path, model_name):
+def load_models(model_path):
     # Load the model architecture
     config_path = None
-    
-    if "hubert" in model_name:
-        model = ECAPA_TDNN_SMALL(feat_dim=1024, feat_type='fbank', config_path=config_path)    
-        model.load_state_dict((torch.load(model_path))['model'], strict=False)
-    elif "wav2vec2" in model_name:
-        model = ECAPA_TDNN_SMALL(feat_dim=1024, feat_type='fbank', config_path=config_path)    
-        model.load_state_dict((torch.load(model_path))['model'], strict=False)
-    elif "wavlm" in model_name:
-        model = ECAPA_TDNN_SMALL(feat_dim=1024, feat_type='fbank', config_path=config_path)  
-        model.load_state_dict((torch.load(model_path))['model'], strict=False)
-    else:
-        raise ValueError("Unknown model type")
-    # Set the model to evaluation mode
+    model = ECAPA_TDNN_SMALL(feat_dim=1024, feat_type='fbank', config_path=config_path)    
+    model.load_state_dict((torch.load(model_path))['model'], strict=False)
     return model
 
+def prep_kalbath_dataset(dataset_path, lang1, lang2):
+    data = []
+    all_files = os.listdir(f"{dataset_path}/{lang1}/test_known/audio")
+    all_files_diffent_lang = os.listdir(f"{dataset_path}/{lang2}/test_known/audio")
+    #pick random files from lang2
+    for file_path in os.listdir(f"{dataset_path}/{lang1}/test_known/audio"):
+        lable_random = random.choice([0,1])
+        file_path = f"{dataset_path}/{lang1}/test_known/audio/{file_path}"
+        if lable_random == 0:
+            file2 = f"{dataset_path}/{lang2}/test_known/audio/{random.choice(all_files_diffent_lang)}"
+            data.append({"file_path_1": file_path, "file_path_2": file2, "label": 0})
+        else:
+            similar_file = f"{dataset_path}/{lang1}/test_known/audio/{random.choice(all_files)}"
+            data.append({"file_path_1": file_path, "file_path_2": similar_file , "label": 1}) 
+    return data
+
+def readm4a_file(file_path):
+    if not file_path.endswith(".wav"):
+            audio = AudioSegment.from_file(file_path, format="m4a")
+            wav_file_path = 'sample_file.wav'
+            audio.export(wav_file_path, format="wav")
+    else:
+        wav_file_path = file_path
+    
+    data, samplerate = torchaudio.load(wav_file_path)
+    resampler = torchaudio.transforms.Resample(orig_freq=samplerate, new_freq=16000)
+
+    data = resampler(data)
+    return data, 16000
+
+def get_similarity_score(model, audio_1, audio_2):
+    score1 = model(audio_1.to(device))
+    score2 = model(audio_2.to(device))
+    score = F.cosine_similarity(score1, score2).item()
+    return score
+
+def compare_models_on_Kathbath(models, dataset_path, percentage=0.0001):
+    output = []
+    for model in models:
+        model_path = f"{config['model_folder']}/{model}"
+        print(f"Processing model {model_path}")
+        model = load_models(model_path)
+        model.to(device)
+        model.eval()
+        for lang1, lang2 in [("hindi", "punjabi"), ("hindi", "tamil"), ("hindi", "sanskrit")]:
+            dataset_combi = prep_kalbath_dataset(dataset_path, lang1, lang2)
+            genuine_scores = []
+            impostor_scores = []
+            sample_data_len = int(len(dataset_combi) * percentage)
+            sample_data = random.sample(dataset_combi, sample_data_len)
+            for row in sample_data:
+                audio_1, sr = readm4a_file(row['file_path_1'])
+                audio_2, sr = readm4a_file(row['file_path_2'])
+                label = row['label']
+                audio_1 =(F.interpolate(audio_1.view(1,1,-1), size=(96001,), mode='linear', align_corners=False).view(1,-1))
+                audio_2 =(F.interpolate(audio_2.view(1,1,-1), size=(96001,), mode='linear', align_corners=False).view(1,-1))
+                score = get_similarity_score(model,torch.tensor(audio_1), torch.tensor(audio_2))
+                if label == 1:
+                    genuine_scores.append(score)
+                else:
+                    impostor_scores.append(score)
+                
+            eer, eer_threshold = calculate_eer(genuine_scores, impostor_scores)
+            output.append({"model": model_path,"lang":f"{lang1}, {lang2}","eer": eer, "eer_threshold": eer_threshold})
+    return output
+
 if __name__ == "__main__":
-    eer_output = compare_models_on_voxceleb1h(config["models"], config["dataset"])
+    # eer_output = compare_models_on_voxceleb1h(config["models"], config["dataset"])
+    # output_df = pd.DataFrame(eer_output)
+    # print(f"EER calculation sfor all given 3 models on VoxCeleb1-H dataset with  dataset:")
+    # print(output_df)
+
+    print("Calculating EER for all given 3 models on Kathbath dataset")
+    eer_output = compare_models_on_Kathbath(config["models"], "dataset/testkn_audio/kb_data_clean_m4a", 0.01)
     output_df = pd.DataFrame(eer_output)
-    print(f"EER calculation sfor all given 3 models on VoxCeleb1-H dataset with  dataset:")
     print(output_df)
     print("Completed!")
