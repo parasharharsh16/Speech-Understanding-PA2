@@ -248,14 +248,14 @@ def evaluate_finetuned(model, testloader,lang1, lang2):
     return output
 
 if __name__ == "__main__":
-    eer_output = compare_models_on_voxceleb1h(config["models"], config["dataset"], 0.01)
+    eer_output = compare_models_on_voxceleb1h(config["models"], config["dataset"], 0.001)
     output_df = pd.DataFrame(eer_output)
     print(f"EER calculation sfor all given 3 models on VoxCeleb1-H dataset with  dataset:")
     print(output_df)
     output_df.to_csv("output_eer_voxcelb1.csv")
     
     print("Calculating EER for all given 3 models on Kathbath dataset")
-    eer_output = compare_models_on_Kathbath(config["models"], "dataset/testkn_audio/kb_data_clean_m4a", 0.1)
+    eer_output = compare_models_on_Kathbath(config["models"], "dataset/testkn_audio/kb_data_clean_m4a", 0.01)
     output_df = pd.DataFrame(eer_output)
     print(output_df)
     output_df.to_csv("output_eer_kathbath.csv")
@@ -273,7 +273,7 @@ if __name__ == "__main__":
     "epochs": 10,
     })
     #load dataset 
-    dataset = kalbeth("dataset/testkn_audio/kb_data_clean_m4a", "hindi", "punjabi", 0.1).data
+    dataset = kalbeth("dataset/testkn_audio/kb_data_clean_m4a", "hindi", "punjabi", 0.01).data
     #train and test loader
     train_dataset, test_dataset = train_test_split(dataset, test_size=0.2, random_state=42)
 
