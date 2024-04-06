@@ -1,0 +1,10 @@
+,model,lang,eer,eer_threshold
+0,models/wav2vec2_xlsr_finetune.pth,"hindi, punjabi",0.2899159663865546,0.97676265001297
+1,models/wav2vec2_xlsr_finetune.pth,"hindi, tamil",0.5166666666666666,0.9790414323806763
+2,models/wav2vec2_xlsr_finetune.pth,"hindi, sanskrit",0.42521367521367526,0.9754089488983155
+3,models/hubert_large_finetune.pth,"hindi, punjabi",0.48541666666666666,0.9906710062026978
+4,models/hubert_large_finetune.pth,"hindi, tamil",0.5166666666666666,0.9876807684898377
+5,models/hubert_large_finetune.pth,"hindi, sanskrit",0.4201680672268907,0.9932927117347717
+6,models/wavlm_large_finetune.pth,"hindi, punjabi",0.5798319327731092,0.9228470358848573
+7,models/wavlm_large_finetune.pth,"hindi, tamil",0.3550420168067227,0.9242044134140016
+8,models/wavlm_large_finetune.pth,"hindi, sanskrit",0.7100840336134454,0.9359807052612307

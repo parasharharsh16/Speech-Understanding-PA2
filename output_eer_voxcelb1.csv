@@ -1,0 +1,4 @@
+,model,eer,eer_threshold
+0,models/wav2vec2_xlsr_finetune.pth,0.3634698896039345,0.9815935273170472
+1,models/hubert_large_finetune.pth,0.44939308324177263,0.9905935273170472
+2,models/wavlm_large_finetune.pth,0.4436421981548335,0.98191977930069
