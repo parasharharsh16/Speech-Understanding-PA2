@@ -9,3 +9,9 @@ s3prl/
 __pycache__/
 dataset/testkn_audio/
 wandb/
+storage_dir/
+scripts/
+LibriSpeech/
+audio_cache/
+pretrained_models/
+metadata/
