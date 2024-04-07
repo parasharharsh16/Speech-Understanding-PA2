@@ -1,11 +1,12 @@
 # Speech-Understanding-PA2
 This repository contains code for Speech Understanding programming assignment-2 at IIT Jodhpur
-
-##Setup for Question-1
+- Link to this repository: `https://github.com/parasharharsh16/Speech-Understanding-PA2`
+  
+## Setup for Question-1
 - pip install -r requirements.txt
 - p.s. install Fire, Fairseq and S3prl
 
-##Setup for Question-2
+## Setup for Question-2
 - pip install torch torchaudio torchvision
 - pip install scikit-learn
 - pip install pandas
